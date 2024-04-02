@@ -4,6 +4,7 @@ import torch
 from torch.utils.data import Dataset
 
 
+# TODO: Data Augmentation
 class XrayDataset(Dataset):
     def __init__(self, root_dir, transform=None, label_transform=None):
         self.root_dir = root_dir
