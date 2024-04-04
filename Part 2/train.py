@@ -1,15 +1,16 @@
+import os
 import numpy as np
 import torch
 from torch import nn
 from torch import optim
 from torch.utils.data import DataLoader
 from torchvision import transforms as T
-import matplotlib.pyplot as plt
 
 from dataset import XrayDataset
 
 
 # Parameters:
+data_root = "archive"
 device = "cuda"
 batch_size = 1
 epochs = 1
@@ -22,8 +23,8 @@ transform = T.Compose([T.Resize((256, 256)),
                        T.CenterCrop(224),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-train_dataset = XrayDataset("archive/chest_xray/train", transform=transform)
-val_dataset = XrayDataset("archive/chest_xray/val", transform=transform)
+train_dataset = XrayDataset(os.path.join(data_root, "train"), transform=transform)
+val_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform)
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=1)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
