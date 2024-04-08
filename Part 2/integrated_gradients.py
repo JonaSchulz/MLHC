@@ -17,9 +17,10 @@ data_root = "archive"
 device = "cuda"
 model_path = "model.pth"
 batch_size = 1
+image_size = 512
 
-transform = T.Compose([T.Resize((64, 64)),
-                       T.CenterCrop(64),
+transform = T.Compose([T.Resize((image_size, image_size)),
+                       T.CenterCrop(512),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 transform_unchanged = T.Compose([T.Resize((64, 64)),
