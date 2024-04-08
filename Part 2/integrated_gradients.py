@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 import torch
 import torchvision.transforms as T
 import torch.nn.functional as F
@@ -18,6 +19,12 @@ device = "cuda"
 model_path = "model.pth"
 batch_size = 1
 image_size = 512
+
+parser = ArgumentParser()
+parser.add_argument("--data_root", type=str, required=False)
+args = parser.parse_args()
+if "data_root" in args:
+    data_root = args.data_root
 
 transform = T.Compose([T.Resize((image_size, image_size)),
                        T.CenterCrop(512),
