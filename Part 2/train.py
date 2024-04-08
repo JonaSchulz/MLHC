@@ -10,7 +10,7 @@ from dataset import XrayDataset
 
 
 # Parameters:
-data_root = "archive"
+data_root = "chest_xray"
 device = "cuda"
 batch_size = 1
 epochs = 1
@@ -19,8 +19,8 @@ model_save_path = "model.pth"
 loss_save_path = "losses.npz"
 
 # Creating train and val data loaders:
-transform = T.Compose([T.Resize((256, 256)),
-                       T.CenterCrop(224),
+transform = T.Compose([T.Resize((512, 512)),
+                       T.CenterCrop(512),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 train_dataset = XrayDataset(os.path.join(data_root, "train"), transform=transform)

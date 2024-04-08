@@ -22,8 +22,16 @@ transform = T.Compose([T.Resize((64, 64)),
                        T.CenterCrop(64),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-test_dataset = XrayDataset("archive/chest_xray/test", transform=transform)
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
+transform_unchanged = T.Compose([T.Resize((64, 64)),
+                       T.CenterCrop(64),
+                       T.ToTensor()])
+test_dataset = XrayDataset("chest_xray/val", transform=transform)
+test_dataset_unchanged = XrayDataset("chest_xray/val", transform=transform_unchanged)
+
+example_images_healthy = [test_dataset[i][0] for i in range(5)]
+example_images_disease = [test_dataset[-i][0] for i in range(1, 6)]
+example_images_healthy_unchanged = [test_dataset_unchanged[i][0] for i in range(5)]
+example_images_disease_unchanged = [test_dataset_unchanged[-i][0] for i in range(1, 6)]
 
 model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet34', weights="ResNet34_Weights.IMAGENET1K_V1")
 model.fc = nn.Linear(512, 2)
@@ -32,31 +40,41 @@ model.to(device)
 model.eval()
 ig = IntegratedGradients(model)
 
-for i, (image, label) in enumerate(test_loader):
-    image = image.to(device)
-    label = label.to(device)
+fig, ax = plt.subplots(2, 5)
+
+
+for i, image in enumerate(example_images_disease):
+    image = image.unsqueeze(0).to(device)
+    image_unchanged = example_images_healthy_unchanged[i]
 
     out = model(image)
     out = F.softmax(out, dim=1)
     pred_score, pred_label = torch.topk(out, 1)
 
+    print(pred_label)
+
     attributions_ig = ig.attribute(image, target=pred_label, n_steps=200)
-    _ = viz.visualize_image_attr(None, np.transpose(image.squeeze().cpu().detach().numpy(), (1, 2, 0)),
-                                 method="original_image", title="Original Image")
+    attributions_ig /= torch.max(attributions_ig)
 
-    default_cmap = LinearSegmentedColormap.from_list('custom blue',
-                                                     [(0, '#ffffff'),
-                                                      (0.25, '#0000ff'),
-                                                      (1, '#0000ff')], N=256)
+    ax[0][i].imshow(np.transpose(image_unchanged.detach().numpy(), (1, 2, 0)))
+    ax[1][i].imshow(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)))
 
-    _ = viz.visualize_image_attr(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)),
-                                 np.transpose(image.squeeze().cpu().detach().numpy(), (1, 2, 0)),
-                                 method='heat_map',
-                                 cmap=default_cmap,
-                                 show_colorbar=True,
-                                 sign='positive',
-                                 title='Integrated Gradients')
+    #_ = viz.visualize_image_attr(None, np.transpose(image_unchanged.cpu().detach().numpy(), (1, 2, 0)),
+    #                             method="original_image", title="Original Image")
 
-    break
+    #default_cmap = LinearSegmentedColormap.from_list('custom blue',
+    #                                                 [(0, '#ffffff'),
+    #                                                  (0.25, '#0000ff'),
+    #                                                  (1, '#0000ff')], N=256)
+
+    #_ = viz.visualize_image_attr(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)),
+    #                             np.transpose(image.squeeze().cpu().detach().numpy(), (1, 2, 0)),
+    #                             method='heat_map',
+    #                             cmap=default_cmap,
+    #                             show_colorbar=True,
+    #                             sign='positive',
+    #                             title='Integrated Gradients')
+
+plt.show()
 
 
