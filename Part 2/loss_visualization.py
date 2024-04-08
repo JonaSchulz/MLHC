@@ -6,5 +6,5 @@ data = np.load("losses.npz")
 train_loss = data["train_loss"]
 val_loss = data["val_loss"]
 
-plt.plot(train_loss)
+plt.plot(val_loss)
 plt.show()

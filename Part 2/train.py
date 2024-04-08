@@ -12,22 +12,25 @@ from dataset import XrayDataset
 # Parameters:
 data_root = "chest_xray"
 device = "cuda"
-batch_size = 1
-epochs = 1
-test_frequency = 1
-model_save_path = "model.pth"
+image_size = 512
+batch_size = 16
+epochs = 50
+test_frequency = 10
+model_save_path = "model_best.pth"
 loss_save_path = "losses.npz"
 
 # Creating train and val data loaders:
-transform = T.Compose([T.Resize((512, 512)),
+transform = T.Compose([T.Resize((image_size, image_size)),
                        T.CenterCrop(512),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 train_dataset = XrayDataset(os.path.join(data_root, "train"), transform=transform)
 val_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform)
+test_dataset = XrayDataset(os.path.join(data_root, "test"), transform=transform)
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=1)
 val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
+test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
 
 # Initializing model and loss function:
 model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet34', weights="ResNet34_Weights.IMAGENET1K_V1")
@@ -83,18 +86,26 @@ def test(model, dataloader, loss_fn):
 # Train for desired number of epochs:
 train_loss = []
 val_loss = []
+test_loss = []
+best_val_loss = 100
 for epoch in range(epochs):
     loss = train(model=model, dataloader=train_loader, loss_fn=loss_fn, optimizer=optimizer)
     train_loss += loss
     print(f"[TRAIN] Epoch {epoch}, average train loss: {sum(loss) / len(loss)}")
 
     if not epoch % test_frequency:
-        loss += test(model=model, dataloader=val_loader, loss_fn=loss_fn)
+        loss = test(model=model, dataloader=val_loader, loss_fn=loss_fn)
         val_loss += loss
+        if sum(loss) / len(loss) < best_val_loss:
+            best_val_loss = sum(loss) / len(loss)
+            torch.save(model.state_dict(), model_save_path)
         print(f"[VAL] Epoch {epoch}, average val loss: {sum(loss) / len(loss)}")
+
+        loss = test(model=model, dataloader=test_loader, loss_fn=loss_fn)
+        test_loss += loss
 
 # Saving model and losses:
 train_loss = np.array(train_loss)
 val_loss = np.array(val_loss)
-np.savez(loss_save_path, train_loss=train_loss, val_loss=val_loss)
-torch.save(model.state_dict(), model_save_path)
+test_loss = np.array(test_loss)
+np.savez(loss_save_path, train_loss=train_loss, val_loss=val_loss, test_loss=test_loss)
