@@ -76,6 +76,6 @@ for i, image in enumerate(example_images_disease):
     #                             sign='positive',
     #                             title='Integrated Gradients')
 
-plt.show()
+plt.savefig("ig.png")
 
 
