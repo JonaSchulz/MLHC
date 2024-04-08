@@ -1,4 +1,5 @@
 import os
+from argparse import ArgumentParser
 import numpy as np
 import torch
 from torch import nn
@@ -18,6 +19,12 @@ epochs = 50
 test_frequency = 10
 model_save_path = "model_best.pth"
 loss_save_path = "losses.npz"
+
+parser = ArgumentParser()
+parser.add_argument("--data_root", type=str, required=False)
+args = parser.parse_args()
+if "data_root" in args:
+    data_root = args.data_root
 
 # Creating train and val data loaders:
 transform = T.Compose([T.Resize((image_size, image_size)),
