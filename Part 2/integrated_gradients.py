@@ -51,7 +51,7 @@ ig = IntegratedGradients(model)
 #fig, ax = plt.subplots(2, 5)
 
 
-for i, image in enumerate(example_images_disease):
+for i, image in enumerate(example_images_healthy):
     image = image.unsqueeze(0).to(device)
     image_unchanged = example_images_healthy_unchanged[i]
 
