@@ -59,8 +59,7 @@ for i, image in enumerate(example_images_healthy):
 
     print(pred_label)
 
-    attributions_ig = ig.attribute(image, target=pred_label, n_steps=200)
-    attributions_ig /= torch.max(attributions_ig)
+    attributions_ig = ig.attribute(image, target=pred_label, n_steps=200, baselines=torch.mean(image).item())
 
     #ax[0][i].imshow(np.transpose(image_unchanged.detach().numpy(), (1, 2, 0)))
     #ax[1][i].imshow(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)))
@@ -98,8 +97,7 @@ for i, image in enumerate(example_images_disease):
 
     print(pred_label)
 
-    attributions_ig = ig.attribute(image, target=pred_label, n_steps=200)
-    attributions_ig /= torch.max(attributions_ig)
+    attributions_ig = ig.attribute(image, target=pred_label, n_steps=200, baselines=torch.mean(image).item())
 
     #ax[0][i].imshow(np.transpose(image_unchanged.detach().numpy(), (1, 2, 0)))
     #ax[1][i].imshow(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)))
