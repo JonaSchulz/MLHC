@@ -1,3 +1,4 @@
+import os
 from argparse import ArgumentParser
 import torch
 import torchvision.transforms as T
@@ -14,27 +15,26 @@ from matplotlib.colors import LinearSegmentedColormap
 from dataset import XrayDataset
 
 
-data_root = "archive"
+data_root = "chest_xray"
 device = "cuda"
 model_path = "model.pth"
 batch_size = 1
-image_size = 512
+image_size = 256
 
 parser = ArgumentParser()
-parser.add_argument("--data_root", type=str, required=False)
+parser.add_argument("--data_root", type=str, required=False, default=data_root)
 args = parser.parse_args()
-if "data_root" in args:
-    data_root = args.data_root
+data_root = args.data_root
 
 transform = T.Compose([T.Resize((image_size, image_size)),
-                       T.CenterCrop(512),
+                       T.CenterCrop(224),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-transform_unchanged = T.Compose([T.Resize((64, 64)),
-                       T.CenterCrop(64),
+transform_unchanged = T.Compose([T.Resize((image_size, image_size)),
+                       T.CenterCrop(224),
                        T.ToTensor()])
-test_dataset = XrayDataset("chest_xray/val", transform=transform)
-test_dataset_unchanged = XrayDataset("chest_xray/val", transform=transform_unchanged)
+test_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform)
+test_dataset_unchanged = XrayDataset(os.path.join(data_root, "val"), transform=transform_unchanged)
 
 example_images_healthy = [test_dataset[i][0] for i in range(5)]
 example_images_disease = [test_dataset[-i][0] for i in range(1, 6)]
@@ -48,7 +48,7 @@ model.to(device)
 model.eval()
 ig = IntegratedGradients(model)
 
-fig, ax = plt.subplots(2, 5)
+#fig, ax = plt.subplots(2, 5)
 
 
 for i, image in enumerate(example_images_disease):
@@ -64,25 +64,29 @@ for i, image in enumerate(example_images_disease):
     attributions_ig = ig.attribute(image, target=pred_label, n_steps=200)
     attributions_ig /= torch.max(attributions_ig)
 
-    ax[0][i].imshow(np.transpose(image_unchanged.detach().numpy(), (1, 2, 0)))
-    ax[1][i].imshow(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)))
+    #ax[0][i].imshow(np.transpose(image_unchanged.detach().numpy(), (1, 2, 0)))
+    #ax[1][i].imshow(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)))
 
-    #_ = viz.visualize_image_attr(None, np.transpose(image_unchanged.cpu().detach().numpy(), (1, 2, 0)),
-    #                             method="original_image", title="Original Image")
+    fig, ax = plt.subplots(1, 2)
 
-    #default_cmap = LinearSegmentedColormap.from_list('custom blue',
-    #                                                 [(0, '#ffffff'),
-    #                                                  (0.25, '#0000ff'),
-    #                                                  (1, '#0000ff')], N=256)
+    _ = viz.visualize_image_attr(None, np.transpose(image_unchanged.cpu().detach().numpy(), (1, 2, 0)),
+                                 method="original_image", title="Original Image", plt_fig_axis=(fig, ax[0]), use_pyplot=False)
 
-    #_ = viz.visualize_image_attr(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)),
-    #                             np.transpose(image.squeeze().cpu().detach().numpy(), (1, 2, 0)),
-    #                             method='heat_map',
-    #                             cmap=default_cmap,
-    #                             show_colorbar=True,
-    #                             sign='positive',
-    #                             title='Integrated Gradients')
+    default_cmap = LinearSegmentedColormap.from_list('custom blue',
+                                                     [(0, '#ffffff'),
+                                                      (0.25, '#0000ff'),
+                                                      (1, '#0000ff')], N=256)
 
-plt.savefig("ig.png")
+    _ = viz.visualize_image_attr(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)),
+                                 np.transpose(image.squeeze().cpu().detach().numpy(), (1, 2, 0)),
+                                 method='heat_map',
+                                 cmap=default_cmap,
+                                 show_colorbar=True,
+                                 sign='positive',
+                                 title='Integrated Gradients',
+                                 plt_fig_axis=(fig, ax[1]),
+                                 use_pyplot=False)
+
+    plt.savefig(f"ig_{i}.png")
 
 
