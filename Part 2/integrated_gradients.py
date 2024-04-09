@@ -48,8 +48,6 @@ model.to(device)
 model.eval()
 ig = IntegratedGradients(model)
 
-#fig, ax = plt.subplots(2, 5)
-
 
 for i, image in enumerate(example_images_healthy):
     image = image.unsqueeze(0).to(device)
@@ -87,6 +85,45 @@ for i, image in enumerate(example_images_healthy):
                                  plt_fig_axis=(fig, ax[1]),
                                  use_pyplot=False)
 
-    plt.savefig(f"ig_{i}.png")
+    plt.savefig(f"ig_{i}_healthy.png")
+
+
+for i, image in enumerate(example_images_disease):
+    image = image.unsqueeze(0).to(device)
+    image_unchanged = example_images_disease_unchanged[i]
+
+    out = model(image)
+    out = F.softmax(out, dim=1)
+    pred_score, pred_label = torch.topk(out, 1)
+
+    print(pred_label)
+
+    attributions_ig = ig.attribute(image, target=pred_label, n_steps=200)
+    attributions_ig /= torch.max(attributions_ig)
+
+    #ax[0][i].imshow(np.transpose(image_unchanged.detach().numpy(), (1, 2, 0)))
+    #ax[1][i].imshow(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)))
+
+    fig, ax = plt.subplots(1, 2)
+
+    _ = viz.visualize_image_attr(None, np.transpose(image_unchanged.cpu().detach().numpy(), (1, 2, 0)),
+                                 method="original_image", title="Original Image", plt_fig_axis=(fig, ax[0]), use_pyplot=False)
+
+    default_cmap = LinearSegmentedColormap.from_list('custom blue',
+                                                     [(0, '#ffffff'),
+                                                      (0.25, '#0000ff'),
+                                                      (1, '#0000ff')], N=256)
+
+    _ = viz.visualize_image_attr(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)),
+                                 np.transpose(image.squeeze().cpu().detach().numpy(), (1, 2, 0)),
+                                 method='heat_map',
+                                 cmap=default_cmap,
+                                 show_colorbar=True,
+                                 sign='positive',
+                                 title='Integrated Gradients',
+                                 plt_fig_axis=(fig, ax[1]),
+                                 use_pyplot=False)
+
+    plt.savefig(f"ig_{i}_disease.png")
 
 
