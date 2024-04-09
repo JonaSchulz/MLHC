@@ -12,12 +12,13 @@ from dataset import XrayDataset
 
 # Parameters:
 device = "cuda"
+image_size = 512
 batch_size = 1
-model_path = "model.pth"
+model_path = "model_best.pth"
 
 # Creating test data loader:
-transform = T.Compose([T.Resize((256, 256)),
-                       T.CenterCrop(224),
+transform = T.Compose([T.Resize((image_size, image_size)),
+                       T.CenterCrop(512),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 test_dataset = XrayDataset("chest_xray/test", transform=transform)
@@ -49,8 +50,6 @@ def test(model, dataloader, loss_fn):
             loss_list.append(loss.item())
             gt_labels += [l.item() for l in label]
             logits += [l for l in out]
-
-
 
     return loss_list, gt_labels, logits
 
