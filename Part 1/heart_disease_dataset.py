@@ -8,7 +8,6 @@ class HeartDiseaseDataset(Dataset):
         dataframe = pd.read_csv(path)
         self.df = dataframe.drop(columns=['HeartDisease'])
         self.targets = dataframe['HeartDisease']
-        print("hello")
 
     def __len__(self):
         return len(self.df)
