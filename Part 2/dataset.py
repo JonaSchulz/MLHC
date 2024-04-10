@@ -1,4 +1,5 @@
 import os
+import random
 from PIL import Image
 import torch
 from torch.utils.data import Dataset
@@ -6,12 +7,20 @@ from torch.utils.data import Dataset
 
 # TODO: Data Augmentation
 class XrayDataset(Dataset):
-    def __init__(self, root_dir, transform=None, label_transform=None):
+    def __init__(self, root_dir, transform=None, label_transform=None, randomize_labels=False):
         self.root_dir = root_dir
         self.transform = transform
         self.label_transform = label_transform
-        self.file_list = ([(os.path.join(root_dir, "NORMAL", f), 0) for f in os.listdir(os.path.join(root_dir, "NORMAL"))] +
-                          [(os.path.join(root_dir, "PNEUMONIA", f), 1) for f in os.listdir(os.path.join(root_dir, "PNEUMONIA"))])
+        if randomize_labels:
+            self.file_list = ([(os.path.join(root_dir, "NORMAL", f), random.choice((0, 1))) for f in
+                               os.listdir(os.path.join(root_dir, "NORMAL"))] +
+                              [(os.path.join(root_dir, "PNEUMONIA", f), random.choice((0, 1))) for f in
+                               os.listdir(os.path.join(root_dir, "PNEUMONIA"))])
+        else:
+            self.file_list = ([(os.path.join(root_dir, "NORMAL", f), 0) for f in
+                               os.listdir(os.path.join(root_dir, "NORMAL"))] +
+                              [(os.path.join(root_dir, "PNEUMONIA", f), 1) for f in
+                               os.listdir(os.path.join(root_dir, "PNEUMONIA"))])
 
     def __len__(self):
         return len(self.file_list)

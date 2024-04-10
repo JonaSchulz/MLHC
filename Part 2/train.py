@@ -21,17 +21,20 @@ model_save_path = "model_best.pth"
 loss_save_path = "losses.npz"
 
 parser = ArgumentParser()
-parser.add_argument("--data_root", type=str, required=False)
+parser.add_argument("--data_root", type=str, required=False, default=data_root)
+parser.add_argument("--randomize_labels", type=bool, required=False, default=False)
+parser.add_argument("--model_save_path", type=str, required=False, default=model_save_path)
 args = parser.parse_args()
-if "data_root" in args:
-    data_root = args.data_root
+data_root = args.data_root
+randomize_labels = args.randomize_labels
+model_save_path = args.model_save_path
 
 # Creating train and val data loaders:
 transform = T.Compose([T.Resize((image_size, image_size)),
                        T.CenterCrop(512),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-train_dataset = XrayDataset(os.path.join(data_root, "train"), transform=transform)
+train_dataset = XrayDataset(os.path.join(data_root, "train"), transform=transform, randomize_labels=randomize_labels)
 val_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform)
 test_dataset = XrayDataset(os.path.join(data_root, "test"), transform=transform)
 
