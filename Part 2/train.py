@@ -13,7 +13,7 @@ from dataset import XrayDataset
 # Parameters:
 data_root = "chest_xray"
 device = "cuda"
-image_size = 512
+image_size = 256
 batch_size = 16
 epochs = 50
 test_frequency = 10
@@ -31,7 +31,7 @@ model_save_path = args.model_save_path
 
 # Creating train and val data loaders:
 transform = T.Compose([T.Resize((image_size, image_size)),
-                       T.CenterCrop(512),
+                       T.CenterCrop(224),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 train_dataset = XrayDataset(os.path.join(data_root, "train"), transform=transform, randomize_labels=randomize_labels)
