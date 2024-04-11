@@ -17,7 +17,7 @@ from dataset import XrayDataset
 
 data_root = "chest_xray"
 device = "cuda"
-model_path = "model.pth"
+model_path = "model_rl.pth"
 batch_size = 1
 image_size = 256
 
