@@ -17,8 +17,8 @@ image_size = 256
 batch_size = 16
 epochs = 50
 test_frequency = 10
-model_save_path = "model_best.pth"
-loss_save_path = "losses.npz"
+model_save_path = "model_256_2.pth"
+loss_save_path = "losses_256_2.npz"
 
 parser = ArgumentParser()
 parser.add_argument("--data_root", type=str, required=False, default=data_root)
@@ -51,8 +51,8 @@ loss_fn = nn.CrossEntropyLoss().to(device)
 # Initializing optimizer:
 fc_params = list(map(id, model.fc.parameters()))
 base_params = filter(lambda p: id(p) not in fc_params, model.parameters())
-optimizer = optim.Adam([{"params": base_params, "lr": 1e-4},
-                        {"params": model.fc.parameters(), "lr": 1e-3}])
+optimizer = optim.Adam([{"params": base_params, "lr": 1e-5},
+                        {"params": model.fc.parameters(), "lr": 1e-4}])
 
 
 # Train for one epoch:
