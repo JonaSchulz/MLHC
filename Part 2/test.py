@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import os
 from argparse import ArgumentParser
 import numpy as np
@@ -48,7 +49,7 @@ def test(model, dataloader, loss_fn):
     logits = []
 
     with torch.no_grad():
-        for i, (image, label) in enumerate(dataloader):
+        for i, (image, label) in enumerate(tqdm(dataloader)):
             image = image.to(device)
             label = label.to(device)
 
