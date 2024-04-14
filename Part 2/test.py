@@ -14,7 +14,7 @@ from dataset import XrayDataset
 device = "cuda"
 image_size = 512
 batch_size = 1
-model_path = "model_224_rl.pth"
+model_path = "model_224_2.pth"
 
 # Creating test data loader:
 transform = T.Compose([T.Resize((image_size, image_size)),

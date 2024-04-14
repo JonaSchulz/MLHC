@@ -30,16 +30,12 @@ transform = T.Compose([T.Resize((image_size, image_size)),
                        T.CenterCrop(224),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-transform_unchanged = T.Compose([T.Resize((image_size, image_size)),
+unchanged_transform = T.Compose([T.Resize((image_size, image_size)),
                        T.CenterCrop(224),
                        T.ToTensor()])
-test_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform)
-test_dataset_unchanged = XrayDataset(os.path.join(data_root, "val"), transform=transform_unchanged)
+test_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform, unchanged_transform=unchanged_transform)
+test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-example_images_healthy = [test_dataset[i][0] for i in range(5)]
-example_images_disease = [test_dataset[-i][0] for i in range(1, 6)]
-example_images_healthy_unchanged = [test_dataset_unchanged[i][0] for i in range(5)]
-example_images_disease_unchanged = [test_dataset_unchanged[-i][0] for i in range(1, 6)]
 
 model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet34', weights="ResNet34_Weights.IMAGENET1K_V1")
 model.fc = nn.Linear(512, 2)
@@ -47,6 +43,17 @@ model.load_state_dict(torch.load(model_path))
 model.to(device)
 model.eval()
 ig = IntegratedGradients(model)
+attributions_ig = []
+
+for i, (image, label, original_image) in enumerate(test_loader):
+    image = image.to(device)
+    label = label.to(device)
+
+    out = model(image)
+    pred_label = torch.argmax(out, dim=1)
+
+    attributions_ig.append(ig.attribute(image, target=label, n_steps=200).flatten().cpu().numpy())
+
 
 
 for i, image in enumerate(example_images_healthy):
