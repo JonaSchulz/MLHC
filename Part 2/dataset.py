@@ -29,6 +29,8 @@ class XrayDataset(Dataset):
         label = self.labels[item]
         if self.transform:
             image_transformed = self.transform(image)
+        else:
+            image_transformed = image
         if self.label_transform:
             label = self.label_transform(label)
         if self.unchanged_transform:

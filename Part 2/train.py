@@ -17,8 +17,8 @@ image_size = 256
 batch_size = 16
 epochs = 50
 test_frequency = 10
-model_save_path = "model_224_2.pth"
-loss_save_path = "losses_224_2.npz"
+model_save_path = "models/model_224_2.pth"
+loss_save_path = "loss_files/losses_224_2.npz"
 
 parser = ArgumentParser()
 parser.add_argument("--data_root", type=str, required=False, default=data_root)
