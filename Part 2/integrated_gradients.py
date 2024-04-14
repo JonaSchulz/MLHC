@@ -18,11 +18,11 @@ from dataset import XrayDataset
 
 data_root = "chest_xray"
 device = "cuda"
-model_path = "model_224.pth"
+model_path = "model_224_3.pth"
 attributions_save_path = "attributions_ig.npy"
 batch_size = 1
-image_size = 32
-center_crop_size = 32
+image_size = 64
+center_crop_size = 64
 n_images = 10
 
 parser = ArgumentParser()
@@ -60,7 +60,9 @@ for i, (image, label, original_image) in enumerate(tqdm(test_loader)):
 
     original_images.append(np.transpose(original_image.squeeze(0).cpu().detach().numpy(), (1, 2, 0)))
     labels.append(label.item())
-    attributions_ig.append(ig.attribute(image, target=label, n_steps=200).flatten().cpu().numpy())
+    attribution_ig = np.transpose(ig.attribute(image, target=label, n_steps=200).squeeze().cpu().detach().numpy(),
+                                  (1, 2, 0))
+    attributions_ig.append(attribution_ig)
 
 attributions_ig = np.array(attributions_ig)
 labels = np.array(labels)
@@ -82,7 +84,7 @@ for i in visualize_indices:
                                                       (0.25, '#0000ff'),
                                                       (1, '#0000ff')], N=256)
 
-    _ = viz.visualize_image_attr(attributions_ig[i].reshape((center_crop_size, center_crop_size, 3)),
+    _ = viz.visualize_image_attr(attributions_ig[i],
                                  original_images[i],
                                  method='heat_map',
                                  cmap=default_cmap,
