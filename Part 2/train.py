@@ -51,8 +51,9 @@ loss_fn = nn.CrossEntropyLoss().to(device)
 # Initializing optimizer:
 fc_params = list(map(id, model.fc.parameters()))
 base_params = filter(lambda p: id(p) not in fc_params, model.parameters())
-optimizer = optim.Adam([{"params": base_params, "lr": 1e-5},
-                        {"params": model.fc.parameters(), "lr": 1e-4}])
+#optimizer = optim.Adam([{"params": base_params, "lr": 0.001},
+#                        {"params": model.fc.parameters(), "lr": 0.001}])
+optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 
 # Train for one epoch:

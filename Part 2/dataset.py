@@ -18,6 +18,7 @@ class XrayDataset(Dataset):
                           [os.path.join(root_dir, "PNEUMONIA", f) for f in
                            os.listdir(os.path.join(root_dir, "PNEUMONIA"))])
         if randomize_labels:
+            print("Shuffling labels")
             random.shuffle(self.labels)
 
     def __len__(self):
