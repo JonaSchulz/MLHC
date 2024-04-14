@@ -47,6 +47,7 @@ model.load_state_dict(torch.load(model_path))
 model.to(device)
 model.eval()
 ig = IntegratedGradients(model)
+
 attributions_ig = []
 labels = []
 original_images = []
