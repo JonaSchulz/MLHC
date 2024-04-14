@@ -18,7 +18,7 @@ from dataset import XrayDataset
 
 data_root = "chest_xray"
 device = "cuda"
-model_path = "model_224_3.pth"
+model_path = "models/model_224_3.pth"
 attributions_save_path = "attributions_ig.npy"
 batch_size = 1
 image_size = 64

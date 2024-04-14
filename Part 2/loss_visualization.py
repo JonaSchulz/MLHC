@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-data = np.load("losses_224_2.npz")
+data = np.load("loss_files/losses_224_2.npz")
 train_loss = data["train_loss"]
 val_loss = data["val_loss"]
 test_loss = data["test_loss"]

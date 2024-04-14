@@ -18,7 +18,7 @@ data_root = "chest_xray"
 device = "cuda"
 image_size = 512
 batch_size = 1
-model_path = "model_224_2.pth"
+model_path = "models/model_224_2.pth"
 
 parser = ArgumentParser()
 parser.add_argument("--data_root", type=str, required=False, default=data_root)
