@@ -12,14 +12,13 @@ from sklearn.metrics import balanced_accuracy_score, f1_score, roc_curve, roc_au
 
 from dataset import XrayDataset
 
-
 # Parameters:
 data_root = "chest_xray"
 device = "cuda"
 image_size = 256
 center_crop_size = 224
-batch_size = 1
-model_path = "models/model_224_rl.pth"
+batch_size = 8
+model_path = "models/model_224_long.pth"
 
 parser = ArgumentParser()
 parser.add_argument("--data_root", type=str, required=False, default=data_root)
