@@ -1,0 +1,1 @@
+{"model_save_path": "model_224_long.pth", "loss_save_path": "loss_224_long.npz", "batch_size": 16, "base_lr": 0.0001, "fc_lr": 0.001, "epochs": 200, "image_size": 256, "center_crop_size": 224, "randomize_labels": true}
