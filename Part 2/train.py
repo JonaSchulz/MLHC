@@ -31,7 +31,6 @@ parser.add_argument("--epochs", type=int, required=False, default=epochs)
 args = parser.parse_args()
 data_root = args.data_root
 randomize_labels = args.randomize_labels
-print(randomize_labels)
 model_save_path = f"{args.run_name}_model.pth"
 loss_save_path = f"{args.run_name}_loss.npz"
 epochs = args.epochs
