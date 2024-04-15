@@ -16,9 +16,10 @@ from dataset import XrayDataset
 # Parameters:
 data_root = "chest_xray"
 device = "cuda"
-image_size = 512
+image_size = 256
+center_crop_size = 224
 batch_size = 1
-model_path = "models/model_224_2.pth"
+model_path = "models/model_224_rl.pth"
 
 parser = ArgumentParser()
 parser.add_argument("--data_root", type=str, required=False, default=data_root)
@@ -27,10 +28,10 @@ data_root = args.data_root
 
 # Creating test data loader:
 transform = T.Compose([T.Resize((image_size, image_size)),
-                       T.CenterCrop(512),
+                       T.CenterCrop(center_crop_size),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-test_dataset = XrayDataset(os.path.join(data_root, "test"), transform=transform)
+test_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
 
 # Initializing model and loss function:
