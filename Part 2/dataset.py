@@ -5,31 +5,35 @@ import torch
 from torch.utils.data import Dataset
 
 
-# TODO: Data Augmentation
 class XrayDataset(Dataset):
-    def __init__(self, root_dir, transform=None, label_transform=None, randomize_labels=False):
+    def __init__(self, root_dir, transform=None, label_transform=None, unchanged_transform=None, randomize_labels=False):
         self.root_dir = root_dir
         self.transform = transform
         self.label_transform = label_transform
+        self.unchanged_transform = unchanged_transform
+        self.labels = ([0 for _ in os.listdir(os.path.join(root_dir, "NORMAL"))] +
+                  [1 for _ in os.listdir(os.path.join(root_dir, "PNEUMONIA"))])
+        self.file_list = ([os.path.join(root_dir, "NORMAL", f) for f in
+                           os.listdir(os.path.join(root_dir, "NORMAL"))] +
+                          [os.path.join(root_dir, "PNEUMONIA", f) for f in
+                           os.listdir(os.path.join(root_dir, "PNEUMONIA"))])
         if randomize_labels:
-            self.file_list = ([(os.path.join(root_dir, "NORMAL", f), random.choice((0, 1))) for f in
-                               os.listdir(os.path.join(root_dir, "NORMAL"))] +
-                              [(os.path.join(root_dir, "PNEUMONIA", f), random.choice((0, 1))) for f in
-                               os.listdir(os.path.join(root_dir, "PNEUMONIA"))])
-        else:
-            self.file_list = ([(os.path.join(root_dir, "NORMAL", f), 0) for f in
-                               os.listdir(os.path.join(root_dir, "NORMAL"))] +
-                              [(os.path.join(root_dir, "PNEUMONIA", f), 1) for f in
-                               os.listdir(os.path.join(root_dir, "PNEUMONIA"))])
+            print("Shuffling labels")
+            random.shuffle(self.labels)
 
     def __len__(self):
         return len(self.file_list)
 
     def __getitem__(self, item):
-        image = Image.open(self.file_list[item][0]).convert("RGB")
-        label = self.file_list[item][1]
+        image = Image.open(self.file_list[item]).convert("RGB")
+        label = self.labels[item]
         if self.transform:
-            image = self.transform(image)
+            image_transformed = self.transform(image)
+        else:
+            image_transformed = image
         if self.label_transform:
             label = self.label_transform(label)
-        return image, label
+        if self.unchanged_transform:
+            image_unchanged = self.unchanged_transform(image)
+            return image_transformed, label, image_unchanged
+        return image_transformed, label

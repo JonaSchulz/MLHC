@@ -1,3 +1,6 @@
+from tqdm import tqdm
+import os
+from argparse import ArgumentParser
 import numpy as np
 import torch
 from torch import nn
@@ -11,17 +14,23 @@ from dataset import XrayDataset
 
 
 # Parameters:
+data_root = "chest_xray"
 device = "cuda"
 image_size = 512
 batch_size = 1
-model_path = "model_224_rl.pth"
+model_path = "models/model_224_2.pth"
+
+parser = ArgumentParser()
+parser.add_argument("--data_root", type=str, required=False, default=data_root)
+args = parser.parse_args()
+data_root = args.data_root
 
 # Creating test data loader:
 transform = T.Compose([T.Resize((image_size, image_size)),
                        T.CenterCrop(512),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-test_dataset = XrayDataset("chest_xray/test", transform=transform)
+test_dataset = XrayDataset(os.path.join(data_root, "test"), transform=transform)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
 
 # Initializing model and loss function:
@@ -40,7 +49,7 @@ def test(model, dataloader, loss_fn):
     logits = []
 
     with torch.no_grad():
-        for i, (image, label) in enumerate(dataloader):
+        for i, (image, label) in enumerate(tqdm(dataloader)):
             image = image.to(device)
             label = label.to(device)
 

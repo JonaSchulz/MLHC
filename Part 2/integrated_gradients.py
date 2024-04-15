@@ -1,4 +1,5 @@
 import os
+from tqdm import tqdm
 from argparse import ArgumentParser
 import torch
 import torchvision.transforms as T
@@ -17,9 +18,12 @@ from dataset import XrayDataset
 
 data_root = "chest_xray"
 device = "cuda"
-model_path = "model_224_rl.pth"
+model_path = "models/model_224_3.pth"
+attributions_save_path = "attributions_ig.npy"
 batch_size = 1
-image_size = 256
+image_size = 64
+center_crop_size = 64
+n_images = 10
 
 parser = ArgumentParser()
 parser.add_argument("--data_root", type=str, required=False, default=data_root)
@@ -27,19 +31,15 @@ args = parser.parse_args()
 data_root = args.data_root
 
 transform = T.Compose([T.Resize((image_size, image_size)),
-                       T.CenterCrop(224),
+                       T.CenterCrop(center_crop_size),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-transform_unchanged = T.Compose([T.Resize((image_size, image_size)),
-                       T.CenterCrop(224),
+unchanged_transform = T.Compose([T.Resize((image_size, image_size)),
+                       T.CenterCrop(center_crop_size),
                        T.ToTensor()])
-test_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform)
-test_dataset_unchanged = XrayDataset(os.path.join(data_root, "val"), transform=transform_unchanged)
+test_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform, unchanged_transform=unchanged_transform)
+test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-example_images_healthy = [test_dataset[i][0] for i in range(5)]
-example_images_disease = [test_dataset[-i][0] for i in range(1, 6)]
-example_images_healthy_unchanged = [test_dataset_unchanged[i][0] for i in range(5)]
-example_images_disease_unchanged = [test_dataset_unchanged[-i][0] for i in range(1, 6)]
 
 model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet34', weights="ResNet34_Weights.IMAGENET1K_V1")
 model.fc = nn.Linear(512, 2)
@@ -48,34 +48,45 @@ model.to(device)
 model.eval()
 ig = IntegratedGradients(model)
 
+attributions_ig = []
+labels = []
+original_images = []
 
-for i, image in enumerate(example_images_healthy):
-    image = image.unsqueeze(0).to(device)
-    image_unchanged = example_images_healthy_unchanged[i]
+for i, (image, label, original_image) in enumerate(tqdm(test_loader)):
+    image = image.to(device)
+    label = label.to(device)
 
     out = model(image)
-    out = F.softmax(out, dim=1)
-    pred_score, pred_label = torch.topk(out, 1)
+    pred_label = torch.argmax(out, dim=1)
 
-    print(pred_label)
+    original_images.append(np.transpose(original_image.squeeze(0).cpu().detach().numpy(), (1, 2, 0)))
+    labels.append(label.item())
+    attribution_ig = np.transpose(ig.attribute(image, target=label, n_steps=200).squeeze().cpu().detach().numpy(),
+                                  (1, 2, 0))
+    attributions_ig.append(attribution_ig)
 
-    attributions_ig = ig.attribute(image, target=pred_label, n_steps=200)
+attributions_ig = np.array(attributions_ig)
+labels = np.array(labels)
+np.save(attributions_save_path, attributions_ig)
 
-    #ax[0][i].imshow(np.transpose(image_unchanged.detach().numpy(), (1, 2, 0)))
-    #ax[1][i].imshow(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)))
+healthy_indices = np.argwhere(labels == 0).flatten()
+pneumonia_indices = np.argwhere(labels == 1).flatten()
+visualize_indices = np.concatenate((healthy_indices[:n_images // 2], pneumonia_indices[:n_images // 2]))
 
+for i in visualize_indices:
     fig, ax = plt.subplots(1, 2)
 
-    _ = viz.visualize_image_attr(None, np.transpose(image_unchanged.cpu().detach().numpy(), (1, 2, 0)),
-                                 method="original_image", title="Original Image", plt_fig_axis=(fig, ax[0]), use_pyplot=False)
+    _ = viz.visualize_image_attr(None, original_images[i],
+                                 method="original_image", title="Original Image", plt_fig_axis=(fig, ax[0]),
+                                 use_pyplot=False)
 
     default_cmap = LinearSegmentedColormap.from_list('custom blue',
                                                      [(0, '#ffffff'),
                                                       (0.25, '#0000ff'),
                                                       (1, '#0000ff')], N=256)
 
-    _ = viz.visualize_image_attr(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)),
-                                 np.transpose(image.squeeze().cpu().detach().numpy(), (1, 2, 0)),
+    _ = viz.visualize_image_attr(attributions_ig[i],
+                                 original_images[i],
                                  method='heat_map',
                                  cmap=default_cmap,
                                  show_colorbar=True,
@@ -84,44 +95,5 @@ for i, image in enumerate(example_images_healthy):
                                  plt_fig_axis=(fig, ax[1]),
                                  use_pyplot=False)
 
-    plt.savefig(f"ig_{i}_healthy.png")
-
-
-for i, image in enumerate(example_images_disease):
-    image = image.unsqueeze(0).to(device)
-    image_unchanged = example_images_disease_unchanged[i]
-
-    out = model(image)
-    out = F.softmax(out, dim=1)
-    pred_score, pred_label = torch.topk(out, 1)
-
-    print(pred_label)
-
-    attributions_ig = ig.attribute(image, target=pred_label, n_steps=200)
-
-    #ax[0][i].imshow(np.transpose(image_unchanged.detach().numpy(), (1, 2, 0)))
-    #ax[1][i].imshow(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)))
-
-    fig, ax = plt.subplots(1, 2)
-
-    _ = viz.visualize_image_attr(None, np.transpose(image_unchanged.cpu().detach().numpy(), (1, 2, 0)),
-                                 method="original_image", title="Original Image", plt_fig_axis=(fig, ax[0]), use_pyplot=False)
-
-    default_cmap = LinearSegmentedColormap.from_list('custom blue',
-                                                     [(0, '#ffffff'),
-                                                      (0.25, '#0000ff'),
-                                                      (1, '#0000ff')], N=256)
-
-    _ = viz.visualize_image_attr(np.transpose(attributions_ig.squeeze().cpu().detach().numpy(), (1, 2, 0)),
-                                 np.transpose(image.squeeze().cpu().detach().numpy(), (1, 2, 0)),
-                                 method='heat_map',
-                                 cmap=default_cmap,
-                                 show_colorbar=True,
-                                 sign='positive',
-                                 title='Integrated Gradients',
-                                 plt_fig_axis=(fig, ax[1]),
-                                 use_pyplot=False)
-
-    plt.savefig(f"ig_{i}_disease.png")
-
-
+    label = "pneumonia" if labels[i] else "healthy"
+    plt.savefig(f"ig_{i}_{label}.png")
