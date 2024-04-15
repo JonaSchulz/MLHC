@@ -19,7 +19,7 @@ center_crop_size = 224
 batch_size = 16
 base_lr = 1e-4
 fc_lr = 1e-3
-epochs = 50
+epochs = 1
 val_frequency = 10
 run_name = "test"
 
@@ -55,7 +55,7 @@ transform = T.Compose([T.Resize((image_size, image_size)),
                        T.CenterCrop(center_crop_size),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-train_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform, randomize_labels=randomize_labels)
+train_dataset = XrayDataset(os.path.join(data_root, "train"), transform=transform, randomize_labels=randomize_labels)
 val_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform)
 test_dataset = XrayDataset(os.path.join(data_root, "test"), transform=transform)
 
