@@ -105,9 +105,11 @@ labels = np.array(labels)
 
 healthy_indices = np.argwhere(labels == 0).flatten()[:n_images // 2]
 pneumonia_indices = np.argwhere(labels == 1).flatten()[:n_images // 2]
+visualize_indices = np.concatenate((healthy_indices, pneumonia_indices))
 
-for i in range(len(healthy_indices) + len(pneumonia_indices)):
-    ind = healthy_indices[i // 2] if i % 10 < 5 else pneumonia_indices[i // 2]
+for i in range(n_images):
+    ind = healthy_indices[i - i // 10 * 5] if i % 10 < 5 else pneumonia_indices[i - (i // 10 + 1) * 5]
+
     if not i % 10:
         if i != 0:
             ax[0, 2].set_title("Grad-CAM")
