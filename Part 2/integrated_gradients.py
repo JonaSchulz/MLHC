@@ -78,6 +78,7 @@ fig, ax = plt.subplots(10, 3, figsize=(10, 30))
 for i, ind in enumerate(visualize_indices):
     label = "pneumonia" if labels[ind] else "healthy"
     # fig, ax = plt.subplots(1, 2)
+    ax[i, 0].set_axis_on()
 
     _ = viz.visualize_image_attr(None, original_images[ind],
                                  method="original_image", title="Original Image" if i == 0 else None, plt_fig_axis=(fig, ax[i, 0]),
@@ -96,6 +97,7 @@ for i, ind in enumerate(visualize_indices):
                                  title='Integrated Gradients' if i == 0 else None,
                                  plt_fig_axis=(fig, ax[i, 1]),
                                  use_pyplot=False)
+    ax[i, 0].set_ylabel(label, fontsize="x-large")
 
     #plt.savefig(f"ig_{i}_{label}.png")
 
