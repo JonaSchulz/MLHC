@@ -18,12 +18,12 @@ from dataset import XrayDataset
 
 data_root = "chest_xray"
 device = "cuda"
-model_path = "models/model_224_3.pth"
+model_path = "models/model_224.pth"
 attributions_save_path = "attributions_ig.npy"
 batch_size = 1
-image_size = 64
-center_crop_size = 64
-n_images = 10
+image_size = 256
+center_crop_size = 224
+n_images = 16
 
 parser = ArgumentParser()
 parser.add_argument("--data_root", type=str, required=False, default=data_root)

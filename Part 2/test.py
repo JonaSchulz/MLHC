@@ -18,7 +18,7 @@ device = "cuda"
 image_size = 256
 center_crop_size = 224
 batch_size = 8
-model_path = "models/model_224_long.pth"
+model_path = "models/model_224_rl.pth"
 
 parser = ArgumentParser()
 parser.add_argument("--data_root", type=str, required=False, default=data_root)
