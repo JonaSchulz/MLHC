@@ -19,11 +19,12 @@ from dataset import XrayDataset
 data_root = "chest_xray"
 device = "cuda"
 model_path = "models/model_224_long.pth"
+model_rl_path = "models/model_224_rl.pth"
 attributions_save_path = "attributions_ig.npy"
 batch_size = 1
 image_size = 256
 center_crop_size = 224
-n_images = 200
+n_images = 100
 
 parser = ArgumentParser()
 parser.add_argument("--data_root", type=str, required=False, default=data_root)
@@ -37,7 +38,7 @@ transform = T.Compose([T.Resize((image_size, image_size)),
 unchanged_transform = T.Compose([T.Resize((image_size, image_size)),
                                  T.CenterCrop(center_crop_size),
                                  T.ToTensor()])
-test_dataset = XrayDataset(os.path.join(data_root, "test"), transform=transform, unchanged_transform=unchanged_transform)
+test_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform, unchanged_transform=unchanged_transform)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
 
@@ -46,13 +47,27 @@ model.fc = nn.Linear(512, 2)
 model.load_state_dict(torch.load(model_path))
 model.to(device)
 model.eval()
+
+model_rl = torch.hub.load('pytorch/vision:v0.10.0', 'resnet34', weights="ResNet34_Weights.IMAGENET1K_V1")
+model_rl.fc = nn.Linear(512, 2)
+model_rl.load_state_dict(torch.load(model_path))
+model_rl.to(device)
+model_rl.eval()
+
 ig = IntegratedGradients(model)
 
 target_layers = [model.layer4[-1]]
 cam = GradCAM(model=model, target_layers=target_layers)
 
+ig_rl = IntegratedGradients(model_rl)
+
+target_layers = [model_rl.layer4[-1]]
+cam_rl = GradCAM(model=model_rl, target_layers=target_layers)
+
 attributions_ig = []
 attributions_cam = []
+attributions_ig_rl = []
+attributions_cam_rl = []
 labels = []
 original_images = []
 
@@ -70,12 +85,22 @@ for i, (image, label, original_image) in enumerate(tqdm(test_loader)):
     grayscale_cam = grayscale_cam[0, :]
     attributions_cam.append(grayscale_cam)
 
+    grayscale_cam_rl = cam_rl(input_tensor=image)
+    grayscale_cam_rl = grayscale_cam_rl[0, :]
+    attributions_cam_rl.append(grayscale_cam_rl)
+
     attribution_ig = np.transpose(ig.attribute(image, target=label, n_steps=200).squeeze().cpu().detach().numpy(),
                                   (1, 2, 0))
     attributions_ig.append(attribution_ig)
 
+    attribution_ig_rl = np.transpose(ig_rl.attribute(image, target=label, n_steps=200).squeeze().cpu().detach().numpy(),
+                                  (1, 2, 0))
+    attributions_ig_rl.append(attribution_ig_rl)
+
 attributions_ig = np.array(attributions_ig)
 attributions_cam = np.array(attributions_cam)
+attributions_ig_rl = np.array(attributions_ig_rl)
+attributions_cam_rl = np.array(attributions_cam_rl)
 labels = np.array(labels)
 # np.save(attributions_save_path, attributions_ig)
 
@@ -87,8 +112,9 @@ for i, ind in enumerate(visualize_indices):
     if not i % 10:
         if i != 0:
             ax[0, 2].set_title("Grad-CAM")
+            ax[0, 4].set_title("Grad-CAM (randomized)")
             plt.savefig(f"ig_gradcam_{i // 10}.png")
-        fig, ax = plt.subplots(10, 3, figsize=(10, 30))
+        fig, ax = plt.subplots(10, 5, figsize=(15, 30))
 
     label = "pneumonia" if labels[ind] else "healthy"
     # fig, ax = plt.subplots(1, 2)
@@ -112,10 +138,22 @@ for i, ind in enumerate(visualize_indices):
                                  title='Integrated Gradients' if not i % 10 else None,
                                  plt_fig_axis=(fig, ax[i % 10, 1]),
                                  use_pyplot=False)
+
+    _ = viz.visualize_image_attr(attributions_ig_rl[ind],
+                                 original_images[ind],
+                                 method='heat_map',
+                                 cmap=default_cmap,
+                                 sign='positive',
+                                 title='Integ. Grad. (randomized)' if not i % 10 else None,
+                                 plt_fig_axis=(fig, ax[i % 10, 3]),
+                                 use_pyplot=False)
     ax[i % 10, 0].set_ylabel(label, fontsize="x-large")
 
     gradcam_image = show_cam_on_image(original_images[ind], attributions_cam[ind], use_rgb=True)
+    gradcam_image_rl = show_cam_on_image(original_images[ind], attributions_cam_rl[ind], use_rgb=True)
     ax[i % 10, 2].imshow(gradcam_image)
     ax[i % 10, 2].set_axis_off()
+    ax[i % 10, 4].imshow(gradcam_image_rl)
+    ax[i % 10, 4].set_axis_off()
 
     #plt.savefig(f"ig_{i}_{label}.png")
