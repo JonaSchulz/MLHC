@@ -22,8 +22,10 @@ model_path = "models/model_224_rl.pth"
 
 parser = ArgumentParser()
 parser.add_argument("--data_root", type=str, required=False, default=data_root)
+parser.add_argument("--model_path", type=str, required=False, default=model_path)
 args = parser.parse_args()
 data_root = args.data_root
+model_path = args.model_path
 
 # Creating test data loader:
 transform = T.Compose([T.Resize((image_size, image_size)),
@@ -34,6 +36,7 @@ test_dataset = XrayDataset(os.path.join(data_root, "test"), transform=transform)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
 
 # Initializing model and loss function:
+print(f"Loading model from {model_path}")
 model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet34', weights="ResNet34_Weights.IMAGENET1K_V1")
 model.fc = nn.Linear(512, 2)
 model.load_state_dict(torch.load(model_path))
