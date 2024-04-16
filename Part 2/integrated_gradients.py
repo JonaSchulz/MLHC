@@ -67,7 +67,7 @@ for i, (image, label, original_image) in enumerate(tqdm(test_loader)):
 
 attributions_ig = np.array(attributions_ig)
 labels = np.array(labels)
-np.save(attributions_save_path, attributions_ig)
+# np.save(attributions_save_path, attributions_ig)
 
 healthy_indices = np.argwhere(labels == 0).flatten()
 pneumonia_indices = np.argwhere(labels == 1).flatten()
@@ -127,7 +127,7 @@ for i, (image, label, original_image) in enumerate(tqdm(test_loader)):
 
 attributions_cam = np.array(attributions_cam)
 labels = np.array(labels)
-np.save(attributions_save_path, attributions_cam)
+# np.save(attributions_save_path, attributions_cam)
 
 healthy_indices = np.argwhere(labels == 0).flatten()
 pneumonia_indices = np.argwhere(labels == 1).flatten()
