@@ -15,7 +15,6 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 
 from dataset import XrayDataset
 
-
 data_root = "chest_xray"
 device = "cuda"
 model_path = "models/model_224_long.pth"
@@ -38,7 +37,7 @@ transform = T.Compose([T.Resize((image_size, image_size)),
 unchanged_transform = T.Compose([T.Resize((image_size, image_size)),
                                  T.CenterCrop(center_crop_size),
                                  T.ToTensor()])
-test_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform, unchanged_transform=unchanged_transform)
+test_dataset = XrayDataset(os.path.join(data_root, "test"), transform=transform, unchanged_transform=unchanged_transform)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
 
@@ -104,11 +103,11 @@ attributions_cam_rl = np.array(attributions_cam_rl)
 labels = np.array(labels)
 # np.save(attributions_save_path, attributions_ig)
 
-healthy_indices = np.argwhere(labels == 0).flatten()
-pneumonia_indices = np.argwhere(labels == 1).flatten()
-visualize_indices = np.concatenate((healthy_indices[:n_images // 2], pneumonia_indices[:n_images // 2]))
+healthy_indices = np.argwhere(labels == 0).flatten()[:n_images // 2]
+pneumonia_indices = np.argwhere(labels == 1).flatten()[:n_images // 2]
 
-for i, ind in enumerate(visualize_indices):
+for i in range(len(healthy_indices) + len(pneumonia_indices)):
+    ind = healthy_indices[i // 2] if i % 10 < 5 else pneumonia_indices[i // 2]
     if not i % 10:
         if i != 0:
             ax[0, 2].set_title("Grad-CAM")
