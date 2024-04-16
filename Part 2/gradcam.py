@@ -20,7 +20,7 @@ device = "cuda"
 image_size = 256
 center_crop_size = 224
 batch_size = 1
-model_path = "models/model_224_rl.pth"
+model_path = "models/model_224_long.pth"
 attributions_save_path = "attributions_cam.npy"
 n_images = 10
 

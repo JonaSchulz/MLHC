@@ -30,7 +30,7 @@ transform = T.Compose([T.Resize((image_size, image_size)),
                        T.CenterCrop(center_crop_size),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-test_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform)
+test_dataset = XrayDataset(os.path.join(data_root, "test"), transform=transform)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
 
 # Initializing model and loss function:
