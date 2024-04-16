@@ -21,8 +21,8 @@ device = "cuda"
 model_path = "models/model_224_long.pth"
 attributions_save_path = "attributions_ig.npy"
 batch_size = 1
-image_size = 32
-center_crop_size = 32
+image_size = 256
+center_crop_size = 224
 n_images = 200
 
 parser = ArgumentParser()
