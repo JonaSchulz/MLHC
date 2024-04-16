@@ -1,4 +1,5 @@
 import os
+import json
 from argparse import ArgumentParser
 import numpy as np
 import torch
@@ -14,24 +15,44 @@ from dataset import XrayDataset
 data_root = "chest_xray"
 device = "cuda"
 image_size = 256
+center_crop_size = 224
 batch_size = 16
-epochs = 50
-test_frequency = 10
-model_save_path = "models/model_224_2.pth"
-loss_save_path = "loss_files/losses_224_2.npz"
+base_lr = 1e-4
+fc_lr = 1e-3
+epochs = 1
+val_frequency = 10
+run_name = "test"
 
 parser = ArgumentParser()
 parser.add_argument("--data_root", type=str, required=False, default=data_root)
 parser.add_argument("--randomize_labels", type=bool, required=False, default=False)
-parser.add_argument("--model_save_path", type=str, required=False, default=model_save_path)
+parser.add_argument("--run_name", type=str, required=False, default=run_name)
+parser.add_argument("--epochs", type=int, required=False, default=epochs)
 args = parser.parse_args()
 data_root = args.data_root
 randomize_labels = args.randomize_labels
-model_save_path = args.model_save_path
+model_save_path = f"{args.run_name}_model.pth"
+loss_save_path = f"{args.run_name}_loss.npz"
+epochs = args.epochs
+
+# Create hyperparameter info file:
+hyperparameters = {
+    "model_save_path": model_save_path,
+    "loss_save_path": loss_save_path,
+    "batch_size": batch_size,
+    "base_lr": base_lr,
+    "fc_lr": fc_lr,
+    "epochs": epochs,
+    "image_size": image_size,
+    "center_crop_size": center_crop_size,
+}
+with open(f"{model_save_path.split('.')[0]}_info.json", "w+") as fp:
+    json.dump(hyperparameters, fp)
+
 
 # Creating train and val data loaders:
 transform = T.Compose([T.Resize((image_size, image_size)),
-                       T.CenterCrop(224),
+                       T.CenterCrop(center_crop_size),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 train_dataset = XrayDataset(os.path.join(data_root, "train"), transform=transform, randomize_labels=randomize_labels)
@@ -51,8 +72,8 @@ loss_fn = nn.CrossEntropyLoss().to(device)
 # Initializing optimizer:
 fc_params = list(map(id, model.fc.parameters()))
 base_params = filter(lambda p: id(p) not in fc_params, model.parameters())
-optimizer = optim.Adam([{"params": base_params, "lr": 1e-5},
-                        {"params": model.fc.parameters(), "lr": 1e-4}])
+optimizer = optim.Adam([{"params": base_params, "lr": base_lr},
+                        {"params": model.fc.parameters(), "lr": fc_lr}])
 
 
 # Train for one epoch:
@@ -96,26 +117,22 @@ def test(model, dataloader, loss_fn):
 # Train for desired number of epochs:
 train_loss = []
 val_loss = []
-test_loss = []
 best_val_loss = 100
 for epoch in range(epochs):
     loss = train(model=model, dataloader=train_loader, loss_fn=loss_fn, optimizer=optimizer)
     train_loss += loss
     print(f"[TRAIN] Epoch {epoch}, average train loss: {sum(loss) / len(loss)}")
 
-    if not epoch % test_frequency:
+    if not epoch % val_frequency:
         loss = test(model=model, dataloader=val_loader, loss_fn=loss_fn)
-        val_loss += loss
+        val_loss.append(sum(loss) / len(loss))
         if sum(loss) / len(loss) < best_val_loss:
             best_val_loss = sum(loss) / len(loss)
-            torch.save(model.state_dict(), model_save_path)
+            torch.save(model.state_dict(), f"{model_save_path.split('.')[0]}_best.pth")
         print(f"[VAL] Epoch {epoch}, average val loss: {sum(loss) / len(loss)}")
-
-        loss = test(model=model, dataloader=test_loader, loss_fn=loss_fn)
-        test_loss += loss
 
 # Saving model and losses:
 train_loss = np.array(train_loss)
 val_loss = np.array(val_loss)
-test_loss = np.array(test_loss)
-np.savez(loss_save_path, train_loss=train_loss, val_loss=val_loss, test_loss=test_loss)
+np.savez(loss_save_path, train_loss=train_loss, val_loss=val_loss)
+torch.save(model.state_dict(), model_save_path)
