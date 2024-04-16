@@ -20,9 +20,10 @@ device = "cuda"
 image_size = 256
 center_crop_size = 224
 batch_size = 1
-model_path = "models/model_224_long.pth"
+model_path = "models/model_224_rl.pth"
 attributions_save_path = "attributions_cam.npy"
-n_images = 10
+image_save_path = "gradcam/model_224_rl"
+n_images = 16
 
 # Creating test data loader:
 transform = T.Compose([T.Resize((image_size, image_size)),
@@ -67,10 +68,17 @@ healthy_indices = np.argwhere(labels == 0).flatten()
 pneumonia_indices = np.argwhere(labels == 1).flatten()
 visualize_indices = np.concatenate((healthy_indices[:n_images // 2], pneumonia_indices[:n_images // 2]))
 
+fig_healthy, ax_healthy = plt.subplots(5, 2)
+fig_pneumonia, ax_pneumonia = plt.subplots(5, 2)
+
 for i in visualize_indices:
+    label = "pneumonia" if labels[i] else "healthy"
+    fig, ax = (fig_healthy, ax_healthy) if label == "healthy" else (fig_pneumonia, ax_pneumonia)
+
     gradcam_image = visualization = show_cam_on_image(original_images[i],
                                                       attributions_cam[i], use_rgb=True)
-    plt.imshow(gradcam_image)
+    ax[i].imshow(gradcam_image)
 
-    label = "pneumonia" if labels[i] else "healthy"
-    plt.savefig(f"gradcam_{i}_{label}.png")
+    # plt.savefig(os.path.join(image_save_path, f"gradcam_{i}_{label}.png"))
+
+plt.savefig(f"gradcam_10_images.png")
