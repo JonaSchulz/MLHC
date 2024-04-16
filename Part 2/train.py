@@ -19,22 +19,20 @@ center_crop_size = 224
 batch_size = 16
 base_lr = 1e-4
 fc_lr = 1e-3
-epochs = 50
+epochs = 1
 val_frequency = 10
-model_save_path = "model_test.pth"
-loss_save_path = "losses_test.npz"
+run_name = "test"
 
 parser = ArgumentParser()
 parser.add_argument("--data_root", type=str, required=False, default=data_root)
 parser.add_argument("--randomize_labels", type=bool, required=False, default=False)
-parser.add_argument("--model_save_path", type=str, required=False, default=model_save_path)
-parser.add_argument("--loss_save_path", type=str, required=False, default=loss_save_path)
+parser.add_argument("--run_name", type=str, required=False, default=run_name)
 parser.add_argument("--epochs", type=int, required=False, default=epochs)
 args = parser.parse_args()
 data_root = args.data_root
 randomize_labels = args.randomize_labels
-model_save_path = args.model_save_path
-loss_save_path = args.loss_save_path
+model_save_path = f"{args.run_name}_model.pth"
+loss_save_path = f"{args.run_name}_loss.npz"
 epochs = args.epochs
 
 # Create hyperparameter info file:
@@ -57,7 +55,7 @@ transform = T.Compose([T.Resize((image_size, image_size)),
                        T.CenterCrop(center_crop_size),
                        T.ToTensor(),
                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-train_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform, randomize_labels=randomize_labels)
+train_dataset = XrayDataset(os.path.join(data_root, "train"), transform=transform, randomize_labels=randomize_labels)
 val_dataset = XrayDataset(os.path.join(data_root, "val"), transform=transform)
 test_dataset = XrayDataset(os.path.join(data_root, "test"), transform=transform)
 
