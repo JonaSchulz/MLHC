@@ -50,7 +50,7 @@ model.eval()
 
 model_rl = torch.hub.load('pytorch/vision:v0.10.0', 'resnet34', weights="ResNet34_Weights.IMAGENET1K_V1")
 model_rl.fc = nn.Linear(512, 2)
-model_rl.load_state_dict(torch.load(model_path))
+model_rl.load_state_dict(torch.load(model_rl_path))
 model_rl.to(device)
 model_rl.eval()
 
